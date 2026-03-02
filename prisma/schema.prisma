@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  phone         String   @unique
+  password      String
+  fullName      String?       // Nom & Prénom combinés
+  companyName   String?       // entreprise (prestataire uniquement)
+  role          Role     @default(CLIENT)
+  isPremium     Boolean  @default(false)
+  credits       Int      @default(0)
+  subscription  Subscription?
+  services      Service[]
+  bookings      Booking[]     @relation("ClientBookings")
+  providerBookings Booking[]  @relation("ProviderBookings")
+  annonces Annonce[]
+
+  // Chat relations
+  conversations1 Conversation[] @relation("Participant1")
+  conversations2 Conversation[] @relation("Participant2")
+  messages       Message[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SubscriptionPlan {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  price         Float
+  serviceLimit  Int
+  durationDays  Int
+  isActive      Boolean  @default(true)
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  planId      String
+  startDate   DateTime @default(now())
+  endDate     DateTime
+  status      SubscriptionStatus @default(ACTIVE)
+
+  user        User     @relation(fields: [userId], references: [id])
+  plan        SubscriptionPlan @relation(fields: [planId], references: [id])
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  type        ServiceType
+  status      ServiceStatus @default(AVAILABLE)
+  frais       Float?        // tarif estimatif
+  price       Float?        // montant final mis à jour après exécution
+  reduction   Float?
+  code        String        @unique
+  tags        String[]       // mots-clés
+  // Geolocation using PostGIS
+  location    Json?
+  latitude    Float?
+  longitude   Float?
+
+  imageUrls   String[]
+  userId      String
+  categoryId  String
+
+  user        User     @relation(fields: [userId], references: [id])
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  bookings    Booking[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model Booking {
+  id               String           @id @default(uuid())
+  code             String           @unique
+  clientId         String
+  providerId       String
+  serviceId        String
+  status           BookingStatus    @default(PENDING)
+  price            Float?
+  rating           Int?
+  comment          String?
+  interventionType InterventionType @default(RDV)
+  scheduledDate    DateTime?
+  scheduledTime    String?
+  description      String?
+  userQrCode       String?   @unique
+  prestaQrCode     String?   @unique
+  userQrScanned    Boolean  @default(false)
+  prestaQrScanned  Boolean  @default(false)
+  client   User    @relation("ClientBookings", fields: [clientId], references: [id])
+  provider User    @relation("ProviderBookings", fields: [providerId], references: [id])
+  service  Service @relation(fields: [serviceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  label    String    @unique
+  iconName String
+
+  services Service[]
+}
+
+
+// ===========================
+// GESTIONNAIRE DE FICHIERS
+// ===========================
+model FileManager {
+  id           Int      @id @default(autoincrement())
+  fileCode     String   @unique
+  fileName     String
+  fileMimeType String
+  fileSize     Int
+  fileUrl      String
+  fileType     String // Ex: 'userFiles', 'servicesFiles', 'iconeServiceFiles', 'iconePaysFiles'
+  targetId     String // UUID de l’élément lié
+  filePath     String? // chemin local sur le disque (optionnel)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+
+model TypeAnnonce {
+  id        String   @id @default(uuid())
+  label     String   @unique // Vente, Location, Réservation
+  slug      String   @unique // vente, location, reservation
+  annonces  Annonce[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CategorieAnnonce {
+  id        String   @id @default(uuid())
+  label     String   @unique
+  slug      String   @unique
+  iconName  String?
+  annonces  Annonce[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Annonce {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  companyName   String?       // entreprise (prestataire uniquement)
+  title         String
+  description   String
+  price         Float?
+  images        String[] // urls
+  options       String[] // TV, Parking, Wifi, etc.
+  location      Json?
+  latitude      Float?
+  longitude     Float?
+  startDate     DateTime?
+  endDate       DateTime?
+  status        AnnonceStatus @default(ACTIVE)
+  // relations
+  userId        String
+  typeId        String
+  categorieId   String
+  user          User              @relation(fields: [userId], references: [id])
+  type          TypeAnnonce       @relation(fields: [typeId], references: [id])
+  categorie     CategorieAnnonce  @relation(fields: [categorieId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum AnnonceStatus {
+  ACTIVE
+  DRAFT
+  EXPIRED
+  SOLD
+  CANCELLED
+}
+
+
+enum Role {
+  CLIENT
+  PRESTATAIRE
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum ServiceType {
+  DEPANNAGE
+  VENTE
+  LOCATION
+}
+
+enum ServiceStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  PAID
+}
+
+enum InterventionType {
+  URGENCE
+  RDV
+}
+
+// ===========================
+// CHAT & MESSAGERIE (WhatsApp-like)
+// ===========================
+
+model Conversation {
+  id            String    @id @default(uuid())
+  participant1Id String
+  participant2Id String
+  bookingId     String?   // Optionnel: lié à un booking spécifique
+  lastMessageId String?
+  
+  participant1  User      @relation("Participant1", fields: [participant1Id], references: [id])
+  participant2  User      @relation("Participant2", fields: [participant2Id], references: [id])
+  
+  messages      Message[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([participant1Id, participant2Id, bookingId])
+}
+
+model Message {
+  id             String      @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String?     // Texte du message
+  fileUrl        String?     // Image, Audio, Fichier
+  fileType       String?     // 'image', 'audio', 'file'
+  fileName       String?
+  status         MessageStatus @default(SENT)
+  
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
+  
+  createdAt      DateTime    @default(now())
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}

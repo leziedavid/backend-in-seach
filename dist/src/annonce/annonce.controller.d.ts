@@ -1,0 +1,131 @@
+import { AnnonceService } from './annonce.service';
+import { CreateAnnonceDto, AnnonceSearchDto, UpdateAnnonceDto } from './dto/annonce.dto';
+import { BaseResponse } from '../common/dto/base-response.dto';
+export declare class AnnonceController {
+    private readonly annonceService;
+    constructor(annonceService: AnnonceService);
+    create(req: any, dto: CreateAnnonceDto, files: any[]): Promise<BaseResponse<{
+        id: string;
+        price: number | null;
+        companyName: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        startDate: Date | null;
+        endDate: Date | null;
+        status: import(".prisma/client").$Enums.AnnonceStatus;
+        title: string;
+        description: string;
+        code: string;
+        location: import("@prisma/client/runtime/library").JsonValue | null;
+        latitude: number | null;
+        longitude: number | null;
+        userId: string;
+        images: string[];
+        options: string[];
+        typeId: string;
+        categorieId: string;
+    }>>;
+    findAll(search: AnnonceSearchDto): Promise<BaseResponse<{
+        data: any;
+        isFallback: boolean;
+    }>>;
+    findOne(id: string): Promise<BaseResponse<{
+        files: {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            fileCode: string;
+            fileName: string;
+            fileMimeType: string;
+            fileSize: number;
+            fileUrl: string;
+            fileType: string;
+            targetId: string;
+            filePath: string | null;
+        }[];
+        user: {
+            email: string;
+            phone: string;
+            fullName: string | null;
+        };
+        type: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            label: string;
+            slug: string;
+        };
+        categorie: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            label: string;
+            iconName: string | null;
+            slug: string;
+        };
+        id: string;
+        price: number | null;
+        companyName: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        startDate: Date | null;
+        endDate: Date | null;
+        status: import(".prisma/client").$Enums.AnnonceStatus;
+        title: string;
+        description: string;
+        code: string;
+        location: import("@prisma/client/runtime/library").JsonValue | null;
+        latitude: number | null;
+        longitude: number | null;
+        userId: string;
+        images: string[];
+        options: string[];
+        typeId: string;
+        categorieId: string;
+    } | null>>;
+    update(id: string, dto: UpdateAnnonceDto, files: any[]): Promise<BaseResponse<{
+        id: string;
+        price: number | null;
+        companyName: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        startDate: Date | null;
+        endDate: Date | null;
+        status: import(".prisma/client").$Enums.AnnonceStatus;
+        title: string;
+        description: string;
+        code: string;
+        location: import("@prisma/client/runtime/library").JsonValue | null;
+        latitude: number | null;
+        longitude: number | null;
+        userId: string;
+        images: string[];
+        options: string[];
+        typeId: string;
+        categorieId: string;
+    }>>;
+    remove(id: string): Promise<BaseResponse<any>>;
+    toggleActive(id: string, dto: {
+        value: boolean;
+    }): Promise<BaseResponse<{
+        id: string;
+        price: number | null;
+        companyName: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        startDate: Date | null;
+        endDate: Date | null;
+        status: import(".prisma/client").$Enums.AnnonceStatus;
+        title: string;
+        description: string;
+        code: string;
+        location: import("@prisma/client/runtime/library").JsonValue | null;
+        latitude: number | null;
+        longitude: number | null;
+        userId: string;
+        images: string[];
+        options: string[];
+        typeId: string;
+        categorieId: string;
+    }>>;
+}
